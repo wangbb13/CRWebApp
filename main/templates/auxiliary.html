@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %} 中铁可视化 {% endblock %}
+
+{% block content %}
+<div style="margin-top: auto">
+    <div style="margin-top: 10px;">
+        {% if click %}
+        <div class="form-group row" id="click_add">
+            <div class="input-group col-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">城市</span>
+                </div>
+                <input type="text" class="form-control" id="city_name">
+            </div>
+            <div class="input-group col-2">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">经度</span>
+                </div>
+                <input type="text" class="form-control" id="lng_val">
+            </div>
+            <div class="input-group col-2">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">纬度</span>
+                </div>
+                <input type="text" class="form-control" id="lat_val">
+            </div>
+            <div class="input-group col-2">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">数值</span>
+                </div>
+                <input type="text" class="form-control" id="no_val">
+            </div>
+            <div class="input-group col-2">
+                <button type="button" class="btn btn-primary" id="add_btn">添加</button>
+            </div>
+        </div>
+        {% else %}
+        <div class="form-group row" id="search_add">
+            <div class="col-3"></div>
+            <div class="input-group col-4">
+                <input type="text" class="form-control" id="search_val" placeholder="城市名">
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-outline-secondary" id="search_btn">搜索</button>
+                </div>
+            </div>
+            <div class="input-group col-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">数值</span>
+                </div>
+                <input type="text" class="form-control" id="sno_val">
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-outline-secondary" id="search_add_btn">添加</button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <div id="auxiliary" style="height: 480px; width: 100%; margin-top: auto"></div>
+</div>
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript" src="/static/main/auxiliary.js"></script>
+{% endblock %}
