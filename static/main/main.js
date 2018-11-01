@@ -36,7 +36,7 @@ function convertData(data, coordMap) {
         if (geoCoord) {
             res.push({
                 name: data[i].name,
-                value: geoCoord.concat(data[i].value)
+                value: geoCoord.concat([data[i].value, data[i].detail])
             });
         }
     }
@@ -45,8 +45,13 @@ function convertData(data, coordMap) {
 
 function main(obj) {
     // get map info
+    // console.log(obj);
 	var data = obj.city;
 	var geoCoordMap = obj.loc;
+	var sum = 0;
+	for (var i = 0; i < data.length; ++i) {
+	    sum += data[i].value;
+    }
 
 	var dom = document.getElementById("main");
 	var myChart = echarts.init(dom);
@@ -62,12 +67,20 @@ function main(obj) {
     	    }
     	},
     	tooltip : {
-    	    trigger: 'item'
+    	    trigger: 'item',
+            formatter: function (params) {
+    	        var str = params.name + ": " + params.value[2] + "</br>";
+    	        str = str + "————————</br>";
+    	        for (var i = 0; i < params.value[3].length; ++ i) {
+    	            str = str + params.value[3][i].name + ": " + params.value[3][i].value + "</br>";
+                }
+                return str;
+            }
     	},
     	bmap: {
     	    center: [81.389641, 45.289662],
     	    zoom: 4,
-    	    roam: false,
+    	    roam: true,
 			mapStyle: { style: "midnight" }
     	},
     	series : [
@@ -76,9 +89,7 @@ function main(obj) {
     	        type: 'scatter',
     	        coordinateSystem: 'bmap',
     	        data: convertData(data, geoCoordMap),
-    	        symbolSize: function (val) {
-    	            return val[2] / 10;
-    	        },
+    	        symbolSize: 10,
     	        label: {
     	            normal: {
     	                formatter: '{b}',
@@ -102,9 +113,7 @@ function main(obj) {
     	        data: convertData(data.sort(function (a, b) {
     	            return b.value - a.value;
     	        }), geoCoordMap),
-    	        symbolSize: function (val) {
-    	            return val[2] / 10;
-    	        },
+    	        symbolSize: 10,
     	        showEffectOn: 'emphasis',
     	        rippleEffect: {
     	            brushType: 'stroke'
@@ -132,11 +141,46 @@ function main(obj) {
 	myChart.setOption(option, true);
 }
 
+function fetch_data(s_time, e_time) {
+    $.ajax({
+        type: "POST",
+        url: "/yard_info/",
+        data: {start: s_time, end: e_time},
+        success: function (resJson) {
+            main(resJson);
+        },
+        error: function () {
+            main({city: [], loc: {}});
+            alert("获取数据失败！");
+        }
+    });
+}
+
 $(function () {
 	// alert("hello, world!");
-    $.getJSON('/static/main/data/map.json', {
-        format: "json"
-    }).done(function (data) {
-        main(data);
+    $("#start_datetime").datetimepicker({
+        format: "YYYY-MM-DD HH:mm",
+        defaultDate: "2018-01-01 00:00"
+    });
+    $("#end_datetime").datetimepicker({
+        format: "YYYY-MM-DD HH:mm",
+        defaultDate: "2018-08-31 00:00"
+    });
+    // $("#start_datetime").on("change.datetimepicker", function (e) {
+    //     // fetch_data(e.date.format("YYYY-MM-DD HH:mm").toString(), $("#end_datetime input").val());
+    //     alert(e.date.format("YYYY-MM-DD HH:mm").toString());
+    // });
+    // $("#end_datetime").on("change.datetimepicker", function (e) {
+    //     // fetch_data($("#start_datetime input").val(), e.date.format("YYYY-MM-DD HH:mm").toString());
+    //     alert(e.date.format("YYYY-MM-DD HH:mm").toString());
+    // });
+    fetch_data($("#start_datetime input").val(), $("#end_datetime input").val());
+    // $.getJSON('/static/main/data/map.json', {
+    //     format: "json"
+    // }).done(function (data) {
+    //     main(data);
+    // });
+    $("#query_yard_btn").click(function () {
+        fetch_data($("#start_datetime input").val(), $("#end_datetime input").val());
     });
 });

@@ -2,3 +2,4 @@
 WebApp/__pycache__
 main/__pycache__
 main/migrations/__pycache__/
+WebApp/settings.py

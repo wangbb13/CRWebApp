@@ -114,6 +114,8 @@ $("#search_btn").click(function () {
             if (resJson.res == 1) {
                 var lng = resJson.lng;
                 var lat = resJson.lat;
+                $("#search_lng").val(lng);
+                $("#search_lat").val(lat);
                 var map = new BMap.Map("auxiliary");
                 map.enableScrollWheelZoom(true);
                 map.setMapStyle({

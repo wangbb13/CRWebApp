@@ -37,14 +37,26 @@
         </div>
         {% else %}
         <div class="form-group row" id="search_add">
-            <div class="col-3"></div>
-            <div class="input-group col-4">
+            <div class="col-1"></div>
+            <div class="input-group col-3">
                 <input type="text" class="form-control" id="search_val" placeholder="城市名">
                 <div class="input-group-append">
                     <button type="button" class="btn btn-outline-secondary" id="search_btn">搜索</button>
                 </div>
             </div>
-            <div class="input-group col-3">
+            <div class="input-group col-2">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">经度</span>
+                </div>
+                <input type="text" class="form-control" id="search_lng">
+            </div>
+            <div class="input-group col-2">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">纬度</span>
+                </div>
+                <input type="text" class="form-control" id="search_lat">
+            </div>
+            <div class="input-group col-2">
                 <div class="input-group-prepend">
                     <span class="input-group-text">数值</span>
                 </div>
