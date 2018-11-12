@@ -91,15 +91,15 @@ function main(obj) {
     	        data: convertData(data, geoCoordMap),
     	        symbolSize: 10,
     	        label: {
-    	            normal: {
-    	                formatter: '{b}',
-    	                position: 'right',
-    	                show: false
-    	            },
-    	            emphasis: {
-    	                show: true
-    	            }
-    	        },
+                    normal: {
+                        formatter: '{b}',
+                        position: 'right',
+                        show: false
+                    },
+                    emphasis: {
+                        show: true
+                    }
+                },
     	        itemStyle: {
     	            normal: {
     	                color: '#ddb926'
@@ -110,9 +110,7 @@ function main(obj) {
     	        // name: 'Top 5',
     	        type: 'effectScatter',
     	        coordinateSystem: 'bmap',
-    	        data: convertData(data.sort(function (a, b) {
-    	            return b.value - a.value;
-    	        }), geoCoordMap),
+    	        data: convertData(data, geoCoordMap),
     	        symbolSize: 10,
     	        showEffectOn: 'emphasis',
     	        rippleEffect: {
@@ -120,12 +118,12 @@ function main(obj) {
     	        },
     	        hoverAnimation: true,
     	        label: {
-    	            normal: {
-    	                formatter: '{b}',
-    	                position: 'right',
-    	                show: true
-    	            }
-    	        },
+                    normal: {
+                        formatter: function (a) { return a.name + ": " + a.value[2]; },
+                        position: 'right',
+                        show: true
+                    }
+                },
     	        itemStyle: {
     	            normal: {
     	                color: '#f4e925',

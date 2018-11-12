@@ -2,9 +2,10 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
-from .kits import get_address, mem_city_result, add_city_data, mem_yard_info, get_yard_info
+from .kits import get_address, mem_city_result, add_city_data, mem_yard_info, get_yard_info, get_data_from_kafka
 from main.models import ReturnApplyInfo, YardInfo
 from django.db.models import Sum
+from datetime import datetime
 
 
 def index(request):
@@ -92,5 +93,92 @@ def yard_info(request):
             'value': v['value'],
             'detail': v['detail']
         })
-    print(context)
+    # print(context)
     return JsonResponse(context)
+
+
+ans_json = {'city': {}, 'loc': {}}
+
+
+def virtual_get_stream_data():
+    """
+    Input: data
+    Format: [
+        [id, code, number, date]
+    ]
+    """
+    global ans_json
+    if len(mem_yard_info) == 0:
+        get_yard_info()
+    temp = dict()
+    data = get_data_from_kafka()
+    for e in data:
+        if e[0] not in mem_yard_info:
+            get_yard_info()
+        _abbr = mem_yard_info[e[1]]['abbr']
+        _loc = mem_yard_info[e[1]]['loc']
+        _city = mem_yard_info[e[1]]['city']
+        if _city not in ans_json['loc']:
+            ans_json['loc'][_city] = _loc
+        if _city not in temp:
+            temp[_city] = {
+                'value': e[2],
+                'detail': [{
+                    'name': _abbr,
+                    'value': e[2]
+                }]
+            }
+        else:
+            temp[_city]['value'] += e[2]
+            temp[_city]['detail'].append({
+                'name': _abbr,
+                'value': e[2]
+            })
+
+    def merge(l1, l2):
+        mid = {}
+        for elem in l1 + l2:
+            if elem['name'] not in mid:
+                mid[elem['name']] = {
+                    'name': elem['name'],
+                    'value': elem['value']
+                }
+            else:
+                mid[elem['name']]['value'] += elem['value']
+        return [v for _, v in mid.items()]
+
+    for k, v in temp.items():
+        if k in ans_json['city']:
+            ans_json['city'][k]['value'] += v['value']
+            ans_json['city'][k]['detail'] = merge(ans_json['city'][k]['detail'], v['detail'])
+        else:
+            ans_json['city'][k] = {
+                'name': k,
+                'value': v['value'],
+                'detail': v['detail']
+            }
+    return ans_json
+
+
+def get_stream_info(request):
+    """
+    Json Format :
+    {
+        city: [
+            {name: city_name, value: number of boxes in this city, detail: [{name: yard, value: box in this yard}]},
+            ...
+        ],
+        loc: {
+            city0: [lng, lat],
+            city1: [lng, lat],
+            ...
+        }
+    }
+    """
+    context = {'city': [], 'loc': {}}
+    if request.method == "POST":
+        data = virtual_get_stream_data()
+        data['city'] = [v for _, v in data['city'].items()]
+        return JsonResponse(data)
+    else:
+        return JsonResponse(context)
