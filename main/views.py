@@ -2,7 +2,7 @@ from django.shortcuts import render
 
 # Create your views here.
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
-from .kits import get_address, mem_city_result, add_city_data, mem_yard_info, get_yard_info, get_data_from_kafka
+from .kits import get_address, mem_city_result, add_city_data, mem_yard_info, get_yard_info, get_data_from_kafka, fake_get_kafka_data
 from main.models import ReturnApplyInfo, YardInfo
 from django.db.models import Sum
 from datetime import datetime
@@ -112,9 +112,12 @@ def virtual_get_stream_data():
         get_yard_info()
     temp = dict()
     data = get_data_from_kafka()
+    # data = fake_get_kafka_data()
     for e in data:
-        if e[0] not in mem_yard_info:
+        if e[1] not in mem_yard_info:
             get_yard_info()
+            if e[1] not in mem_yard_info:
+                continue
         _abbr = mem_yard_info[e[1]]['abbr']
         _loc = mem_yard_info[e[1]]['loc']
         _city = mem_yard_info[e[1]]['city']
@@ -157,7 +160,6 @@ def virtual_get_stream_data():
                 'value': v['value'],
                 'detail': v['detail']
             }
-    return ans_json
 
 
 def get_stream_info(request):
@@ -177,7 +179,8 @@ def get_stream_info(request):
     """
     context = {'city': [], 'loc': {}}
     if request.method == "POST":
-        data = virtual_get_stream_data()
+        virtual_get_stream_data()
+        data = ans_json.copy()
         data['city'] = [v for _, v in data['city'].items()]
         return JsonResponse(data)
     else:

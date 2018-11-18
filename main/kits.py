@@ -3,8 +3,13 @@ import os
 import json
 from geopy.geocoders import Nominatim
 from WebApp.settings import BASE_DIR as base
-from main.models import YardInfo
+from main.models import YardInfo, ReturnApplyInfo
+from django.db.models import Sum
 from geopy.exc import GeocoderTimedOut
+from datetime import datetime
+from threading import Thread
+import pykafka
+from pykafka import KafkaClient
 
 
 mem_city_result = dict()
@@ -12,6 +17,9 @@ mem_yard_info = dict()
 mem_city_loc = dict()
 country_info = dict()
 city_info = dict()
+month_day = 1
+kafka_chinarail_data = []
+consumer_running = False
 
 
 def get_address(city, country=''):
@@ -103,3 +111,57 @@ def get_yard_info():
                 }
     if flush:
         save_city_loc()
+
+
+def consumer_thread():
+    global kafka_chinarail_data
+    client = KafkaClient(zookeeper_hosts='10.8.4.8:2181')
+    topic = client.topics['chinarail']
+    consumer = topic.get_balanced_consumer(consumer_group='chinarail', auto_commit_enable=True, zookeeper_connect='10.8.4.8:2181')
+    for message in consumer:
+        if message is not None:
+            try:
+                data = message.value.decode('utf-8').strip(',').split(',')
+                for elem in data:
+                    elem = elem[1:-1].split()
+                    if len(elem) > 0:
+                        fine = [int(elem[0]), elem[1][1:-1], int(elem[2]), elem[3][11:] + ' ' + elem[4][:8]]
+                        print(fine)
+                        kafka_chinarail_data.append(fine)
+            except Exception as e:
+                raise e
+
+
+def get_data_from_kafka():
+    """
+    Output: data
+    Format: [
+        [id, code, number, date]
+    ]
+    """
+    global kafka_chinarail_data
+    if not consumer_running:
+        thread = Thread(target=consumer_thread)
+        thread.start()
+    if len(kafka_chinarail_data) > 0:
+        data = kafka_chinarail_data.copy()
+        kafka_chinarail_data.clear()
+    else:
+        data = []
+    return data
+
+
+def fake_get_kafka_data():
+    global month_day
+    res = []
+    start_time = str(datetime(2018, 8, month_day, 0, 0))
+    month_day = (month_day + 1) % 31 + 1
+    end_time = str(datetime(2018, 8, month_day, 0, 0))
+    data = ReturnApplyInfo.objects.filter(draw_datetime__gte=start_time)
+    data = data.filter(draw_datetime__lte=end_time)
+    data = data.values('draw_yard_code').annotate(entries=Sum('container_quantity'))
+    _id = 0
+    for e in data:
+        res.append([_id, e['draw_yard_code'], e['entries']])
+        _id += 1
+    return res

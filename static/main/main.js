@@ -43,6 +43,8 @@ function convertData(data, coordMap) {
     return res;
 }
 
+var myChart;
+
 function main(obj) {
     // get map info
     // console.log(obj);
@@ -54,7 +56,8 @@ function main(obj) {
     }
 
 	var dom = document.getElementById("main");
-	var myChart = echarts.init(dom);
+	// var myChart = echarts.init(dom);
+    myChart = echarts.init(dom);
 	var option = {
 		// backgroundColor: '#404a59',
     	title: {
@@ -178,6 +181,27 @@ $(function () {
     // }).done(function (data) {
     //     main(data);
     // });
+    main({city: [], loc: {}});
+    $("#alert_div").hide();
+    setInterval(function () {
+        $.ajax({
+            type: "POST",
+            url: "/get_stream_info/",
+            data: {},
+            success: function (resJson) {
+                var option = myChart.getOption();
+                var data = resJson.city;
+	            var geoCoordMap = resJson.loc;
+	            var convData = convertData(data, geoCoordMap);
+                option.series[0].data = convData;
+                option.series[1].data = convData;
+                myChart.setOption(option);
+            },
+            error: function () {
+                $("#alert_div").show();
+            }
+        });
+    }, 1000);
     $("#query_yard_btn").click(function () {
         fetch_data($("#start_datetime input").val(), $("#end_datetime input").val());
     });
